@@ -1,0 +1,12 @@
+{
+  "name": "Llama New Tab",
+  "description": "A new llama every time you open a new tab!",
+  "version": "1.0.0",
+  "chrome_url_overrides" : {
+    "newtab": "llama.html"
+  },
+  "content_scripts": [{
+    "js" : ["llama.js"]
+  }],
+  "manifest_version": 2
+}
