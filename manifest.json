@@ -5,8 +5,6 @@
   "chrome_url_overrides" : {
     "newtab": "llama.html"
   },
-  "content_scripts": [{
-    "js" : ["llama.js"]
-  }],
+  "permissions": ["storage"],
   "manifest_version": 2
 }
