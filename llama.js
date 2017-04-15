@@ -62,7 +62,13 @@ function main () {
 
       httpGetAsync(URL, function (d) {
         var photos = d.photos.photo.filter(function (photo) {
-          return (photo.url_l && photo.title && photo.owner && photo.id)
+          return (
+            photo.id &&
+            photo.url_l &&
+            photo.owner &&
+            photo.title &&
+            !(/^\d+$/.test(photo.title))
+          )
         })
 
         var data = photos.map(function (photo) {
