@@ -33,12 +33,14 @@ function httpGetAsync (url, callback) {
 function setPicture (data) {
   var imgElem = document.querySelector('#llama-img')
   var titleElem = document.querySelector('#llama-title')
+  var headTitleElem = document.querySelector('title')
 
   var imgData = data.pop()
 
   imgElem.setAttribute('src', imgData.url)
   titleElem.setAttribute('href', imgData.flickrLink)
   titleElem.innerHTML = imgData.title
+  headTitleElem.innerHTML = imgData.title
 
   storePictureData(data)
 }
