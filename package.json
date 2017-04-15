@@ -1,0 +1,19 @@
+{
+  "name": "llamas-for-lea",
+  "version": "1.0.0",
+  "description": "A new llama with every new tab",
+  "scripts": {
+    "lint": "standard --fix"
+  },
+  "author": "mguida22",
+  "license": "MIT",
+  "devDependencies": {
+    "standard": "^10.0.2"
+  },
+  "standard": {
+    "globals": [
+      "chrome",
+      "XMLHttpRequest"
+    ]
+  }
+}
