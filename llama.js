@@ -1,9 +1,9 @@
 function storePictureData (data) {
-  chrome.storage.sync.set({ 'data': data })
+  chrome.storage.local.set({ data: data })
 }
 
 function getPictureData (cb) {
-  chrome.storage.sync.get(['data'], function (items) {
+  chrome.storage.local.get(['data'], function (items) {
     cb(items.data)
   })
 }
@@ -74,8 +74,7 @@ function main () {
           }
         })
 
-        // take a random 20 images
-        data = shuffleArray(data).slice(0, 20)
+        data = shuffleArray(data)
         setPicture(data)
       })
     }
