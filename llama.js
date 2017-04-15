@@ -1,11 +1,22 @@
-function storePictureUrls (urls) {
-  chrome.storage.sync.set({ 'urls': urls })
+function storePictureData (data) {
+  chrome.storage.sync.set({ 'data': data })
 }
 
-function getPictureUrls (cb) {
-  chrome.storage.sync.get(['urls'], function (items) {
-    cb(items.urls)
+function getPictureData (cb) {
+  chrome.storage.sync.get(['data'], function (items) {
+    cb(items.data)
   })
+}
+
+// adapted from http://stackoverflow.com/a/12646864/3711733
+function shuffleArray (array) {
+  for (var i = array.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1))
+    var temp = array[i]
+    array[i] = array[j]
+    array[j] = temp
+  }
+  return array
 }
 
 function httpGetAsync (url, callback) {
@@ -19,17 +30,23 @@ function httpGetAsync (url, callback) {
   xmlHttp.send(null)
 }
 
-function setPicture (urls) {
-  var img = document.querySelector('#llama-img')
-  img.setAttribute('src', urls.pop())
+function setPicture (data) {
+  var imgElem = document.querySelector('#llama-img')
+  var titleElem = document.querySelector('#llama-title')
 
-  storePictureUrls(urls)
+  var imgData = data.pop()
+
+  imgElem.setAttribute('src', imgData.url)
+  titleElem.setAttribute('href', imgData.flickrLink)
+  titleElem.innerHTML = imgData.title
+
+  storePictureData(data)
 }
 
 function main () {
-  getPictureUrls(function (urls) {
-    if (urls && urls.length > 0) {
-      setPicture(urls)
+  getPictureData(function (data) {
+    if (data && data.length > 0) {
+      setPicture(data)
     } else {
       var pageIndex = Math.floor(Math.random() * 5) + 1
       var URL = 'https://api.flickr.com/services/rest/' +
@@ -43,16 +60,23 @@ function main () {
                 '&content_type=1' +
                 '&nojsoncallback=1'
 
-      httpGetAsync(URL, function (data) {
-        var photos = data.photos.photo.filter(function (photo) {
-          return (photo.url_l && photo.title.toLowerCase().indexOf('llama') > -1)
+      httpGetAsync(URL, function (d) {
+        var photos = d.photos.photo.filter(function (photo) {
+          return (photo.url_l && photo.title && photo.owner && photo.id)
         })
 
-        var urls = photos.map(function (photo) {
-          return photo.url_l
+        var data = photos.map(function (photo) {
+          var link = 'https://www.flickr.com/photos/' + photo.owner + '/' + photo.id
+          return {
+            url: photo.url_l,
+            title: photo.title,
+            flickrLink: link
+          }
         })
 
-        setPicture(urls)
+        // take a random 20 images
+        data = shuffleArray(data).slice(0, 20)
+        setPicture(data)
       })
     }
   })
