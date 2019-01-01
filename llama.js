@@ -11,9 +11,15 @@ const storePictureDataById = (pictureData) => {
   })
 }
 
-const getPictureData = (callback) => {
+const getPictureData = () => {
   chrome.storage.local.get(['pictureQueue'], (items) => {
-    callback(items.pictureQueue)
+    const data = items.pictureQueue
+
+    if (data && data.length > 0) {
+      handlePictureUpdate(data)
+    } else {
+      loadNewPictures()
+    }
   })
 }
 
@@ -76,6 +82,50 @@ const handlePictureUpdate = (data) => {
   storePictureData(data)
 }
 
+const loadNewPictures = () => {
+  const pageIndex = Math.floor(Math.random() * 5) + 1
+  const URL = 'https://api.flickr.com/services/rest/' +
+            '?method=flickr.groups.pools.getPhotos' +
+            '&api_key=41ec740b69920fb9fd08fca4c5bfd412' +
+            '&group_id=54097770@N00' +
+            '&per_page=500' +
+            '&page=' + pageIndex +
+            '&extras=url_l' +
+            '&format=json' +
+            '&content_type=1' +
+            '&nojsoncallback=1'
+
+  httpGetAsync(URL, (response) => {
+    const photos = response.photos.photo.filter((photo) => {
+      return (
+        photo.id &&
+        photo.url_l &&
+        photo.owner &&
+        photo.title &&
+        // remove images with indicators of poor quality
+        //   - only numbers in the title
+        //   - contains the word shear
+        !(/^d+$/.test(photo.title)) &&
+        photo.title.toLowerCase().indexOf('shear') === -1
+      )
+    })
+
+    let photoData = photos.map((photo) => {
+      const link = `https://www.flickr.com/photos/${photo.owner}/${photo.id}`
+      return {
+        id: photo.id,
+        url: photo.url_l,
+        title: photo.title,
+        flickrLink: link
+      }
+    })
+
+    // we don't want lots of similar pictures one after the other
+    photoData = shuffleArray(photoData)
+    handlePictureUpdate(photoData)
+  })
+}
+
 const main = () => {
   // if there's an image id param, display that image.
   // this is to handle a user going back to an old image via history
@@ -87,53 +137,13 @@ const main = () => {
       setPicture(data)
     })
   } else {
-    getPictureData((data) => {
-      if (data && data.length > 0) {
-        handlePictureUpdate(data)
-      } else {
-        const pageIndex = Math.floor(Math.random() * 5) + 1
-        const URL = 'https://api.flickr.com/services/rest/' +
-                  '?method=flickr.groups.pools.getPhotos' +
-                  '&api_key=41ec740b69920fb9fd08fca4c5bfd412' +
-                  '&group_id=54097770@N00' +
-                  '&per_page=500' +
-                  '&page=' + pageIndex +
-                  '&extras=url_l' +
-                  '&format=json' +
-                  '&content_type=1' +
-                  '&nojsoncallback=1'
+    getPictureData()
+  }
 
-        httpGetAsync(URL, (response) => {
-          const photos = response.photos.photo.filter((photo) => {
-            return (
-              photo.id &&
-              photo.url_l &&
-              photo.owner &&
-              photo.title &&
-              // remove images with indicators of poor quality
-              //   - only numbers in the title
-              //   - contains the word shear
-              !(/^d+$/.test(photo.title)) &&
-              photo.title.toLowerCase().indexOf('shear') === -1
-            )
-          })
-
-          let photoData = photos.map((photo) => {
-            const link = `https://www.flickr.com/photos/${photo.owner}/${photo.id}`
-            return {
-              id: photo.id,
-              url: photo.url_l,
-              title: photo.title,
-              flickrLink: link
-            }
-          })
-
-          // we don't want lots of similar pictures one after the other
-          photoData = shuffleArray(photoData)
-          handlePictureUpdate(photoData)
-        })
-      }
-    })
+  // set onclick handler to load new images
+  document.getElementById('refresh').onclick = () => {
+    updateHistory()
+    getPictureData()
   }
 }
 
