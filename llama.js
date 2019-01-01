@@ -109,9 +109,12 @@ const main = () => {
               photo.id &&
               photo.url_l &&
               photo.owner &&
-              photo.title
-              // most of the 'higher quality' photos don't have numbers in the title
-              // !(/^d+$/.test(photo.title))
+              photo.title &&
+              // remove images with indicators of poor quality
+              //   - only numbers in the title
+              //   - contains the word shear
+              !(/^d+$/.test(photo.title)) &&
+              photo.title.toLowerCase().indexOf('shear') === -1
             )
           })
 
