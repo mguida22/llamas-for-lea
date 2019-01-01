@@ -1,6 +1,6 @@
 {
   "name": "llamas-for-lea",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A new llama with every new tab",
   "scripts": {
     "lint": "standard --fix"
