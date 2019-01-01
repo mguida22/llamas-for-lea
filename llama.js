@@ -1,41 +1,46 @@
-function storePictureData (data) {
-  chrome.storage.local.set({ data: data })
+'use strict'
+
+const storePictureData = (data) => {
+  chrome.storage.local.set({ data })
 }
 
-function getPictureData (cb) {
+const getPictureData = (callback) => {
   chrome.storage.local.get(['data'], function (items) {
-    cb(items.data)
+    callback(items.data)
   })
 }
 
-// adapted from http://stackoverflow.com/a/12646864/3711733
-function shuffleArray (array) {
-  for (var i = array.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1))
-    var temp = array[i]
+const shuffleArray = (array) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    // pick random remaining element and swap with current element
+    let j = Math.floor(Math.random() * (i + 1))
+    let temp = array[i]
     array[i] = array[j]
     array[j] = temp
   }
+
   return array
 }
 
-function httpGetAsync (url, callback) {
-  var xmlHttp = new XMLHttpRequest()
-  xmlHttp.onreadystatechange = function () {
+const httpGetAsync = (url, callback) => {
+  const xmlHttp = new XMLHttpRequest()
+
+  xmlHttp.onreadystatechange = () => {
     if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
       callback(JSON.parse(xmlHttp.responseText))
     }
   }
+
   xmlHttp.open('GET', url, true)
-  xmlHttp.send(null)
+  xmlHttp.send()
 }
 
-function setPicture (data) {
-  var imgElem = document.querySelector('#llama-img')
-  var titleElem = document.querySelector('#llama-title')
-  var headTitleElem = document.querySelector('title')
+const setPicture = (data) => {
+  const imgElem = document.querySelector('#llama-img')
+  const titleElem = document.querySelector('#llama-title')
+  const headTitleElem = document.querySelector('title')
 
-  var imgData = data.pop()
+  const imgData = data.pop()
 
   imgElem.setAttribute('src', imgData.url)
   titleElem.setAttribute('href', imgData.flickrLink)
@@ -45,13 +50,13 @@ function setPicture (data) {
   storePictureData(data)
 }
 
-function main () {
-  getPictureData(function (data) {
+const main = () => {
+  getPictureData((data) => {
     if (data && data.length > 0) {
       setPicture(data)
     } else {
-      var pageIndex = Math.floor(Math.random() * 5) + 1
-      var URL = 'https://api.flickr.com/services/rest/' +
+      const pageIndex = Math.floor(Math.random() * 5) + 1
+      const URL = 'https://api.flickr.com/services/rest/' +
                 '?method=flickr.groups.pools.getPhotos' +
                 '&api_key=41ec740b69920fb9fd08fca4c5bfd412' +
                 '&group_id=54097770@N00' +
@@ -62,19 +67,20 @@ function main () {
                 '&content_type=1' +
                 '&nojsoncallback=1'
 
-      httpGetAsync(URL, function (d) {
-        var photos = d.photos.photo.filter(function (photo) {
+      httpGetAsync(URL, (response) => {
+        const photos = response.photos.photo.filter((photo) => {
           return (
             photo.id &&
             photo.url_l &&
             photo.owner &&
-            photo.title &&
-            !(/^\d+$/.test(photo.title))
+            photo.title
+            // most of the 'higher quality' photos don't have numbers in the title
+            // !(/^d+$/.test(photo.title))
           )
         })
 
-        var data = photos.map(function (photo) {
-          var link = 'https://www.flickr.com/photos/' + photo.owner + '/' + photo.id
+        let photoData = photos.map((photo) => {
+          const link = `https://www.flickr.com/photos/${photo.owner}/${photo.id}`
           return {
             url: photo.url_l,
             title: photo.title,
@@ -82,8 +88,9 @@ function main () {
           }
         })
 
-        data = shuffleArray(data)
-        setPicture(data)
+        // we don't want lots of similar pictures one after the other
+        photoData = shuffleArray(photoData)
+        setPicture(photoData)
       })
     }
   })
